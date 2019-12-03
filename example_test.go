@@ -1,7 +1,7 @@
-package myos_test
+package golib_os_test
 import (
 	"testing"
-	myos "github.com/weizhouBlue/myos"
+	myos "github.com/weizhouBlue/golib_os"
 	"fmt"
 	"time"
 )

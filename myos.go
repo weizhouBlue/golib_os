@@ -1,4 +1,4 @@
-package myos
+package golib_os
 import(
 	"fmt"
 	"os/exec"
