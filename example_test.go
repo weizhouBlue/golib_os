@@ -4,6 +4,7 @@ import (
 	myos "github.com/weizhouBlue/golib_os"
 	"fmt"
 	"time"
+	"os"
 )
 
 //====================================
@@ -112,4 +113,50 @@ func Test_simple_longCmd(t *testing.T){
 	}
 
 }
+
+
+
+
+
+
+func Test_json1(t *testing.T){
+
+	data:=map[string] string {
+		"k1": "v1" ,
+		"k2": "v2" ,
+
+	}
+	filePath:="./json_test"
+
+	if e:=myos.WriteJsonToFile( filePath , data ) ; e!=nil {
+		fmt.Println(  "failed to WriteJsonToFile " )
+		t.FailNow()
+	}
+
+
+	if jsondata , e:=myos.ReadJsonFromFile( filePath ) ; e!=nil {
+		fmt.Println(  "failed to ReadJsonFromFile " )
+		t.FailNow()
+	}else{
+		fmt.Printf(  "json data: %v \n" , string(jsondata) )
+	}
+
+	os.Remove(filePath)
+
+
+	
+	myos.EmptyFile(filePath)
+
+	size , _ := myos.FileSize( filePath )
+	fmt.Printf("size1eddd : %v \n "  , size  ) 
+
+
+
+
+}
+
+
+
+
+
 
