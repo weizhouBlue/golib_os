@@ -32,7 +32,7 @@ func Test_simple_simpleCmd(t *testing.T){
 	myos.EnableLog=true
 
 	// exec command
-	cmd:="echo $WELAN"
+	cmd:="echo $WELAN ; echo aaa "
 	// addtional environment 
 	env:=[]string{
 		"WELAN=12345",

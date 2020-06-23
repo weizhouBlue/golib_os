@@ -129,8 +129,15 @@ EXE:
 		if err!=nil {
 			chanErr<-fmt.Sprintf("%v" , err )
 		}
-		chanStdoutMsg<- outMsg.String()
-		chanStderrMsg<- outErr.String()
+
+		a:=strings.TrimSpace( outMsg.String() )
+		if len(a)>0{
+			chanStdoutMsg<- a			
+		}
+		b:=strings.TrimSpace( outErr.String() )
+		if len(b)>0{
+			chanStderrMsg<- b		
+		}
 		exitedCode<- cmd.ProcessState.ExitCode()
 
 		close(chanStdoutMsg)
