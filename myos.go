@@ -159,10 +159,10 @@ EXE:
 
 //读取标准输入 。 不堵塞
 // EXE <<< "string...."
-func  ReadStdin() ( []byte , error ){
+func  ReadStdin() []byte {
 	fi, err := os.Stdin.Stat()
 	if err != nil {
-	panic(err)
+		panic(err)
 	}
 
 	if fi.Size() > 0 {
@@ -170,9 +170,9 @@ func  ReadStdin() ( []byte , error ){
 		if err!=nil{
 			panic("failed to read std " )
 		}
-		return StdBytes, nil
+		return StdBytes
 	} else {
-		return nil, nil
+		return nil
 	}
 }
 
