@@ -9,6 +9,7 @@ import(
 	"strings"
 	"io/ioutil"
 	"encoding/json"
+
 )
 
 /*
@@ -156,6 +157,38 @@ EXE:
 //-----------------------
 
 
+//读取标准输入 。 不堵塞
+// EXE <<< "string...."
+func  ReadStdin() ( []byte , error ){
+	fi, err := os.Stdin.Stat()
+	if err != nil {
+	panic(err)
+	}
+
+	if fi.Size() > 0 {
+		StdBytes , err:=ioutil.ReadAll(os.Stdin)
+		if err!=nil{
+			panic("failed to read std " )
+		}
+		return StdBytes, nil
+	} else {
+		return nil, nil
+	}
+}
+
+
+
+
+
+func  ReadArgs() ( []string  ){
+	return os.Args
+}
+
+
+
+
+
+//-----------------------
 
 func PathExists(path string) (bool, error) {
     _, err := os.Stat(path)
