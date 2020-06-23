@@ -52,7 +52,7 @@ func SearchExecutable( name string ) (string , error) {
 
 }
 
-func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second int ) ( chanFinish , chanCancel chan bool , chanStdoutMsg , chanStderrMsg , chanErr chan string , e error ) {
+func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second int ) ( chanFinish , chanCancel chan bool , chanStdoutMsg , chanStderrMsg , chanErr chan string , exitedCode chan int, e error ) {
 	var outMsg bytes.Buffer
 	var outErr bytes.Buffer
 	var ctx context.Context
@@ -65,10 +65,10 @@ func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second 
 	chanStdoutMsg = make ( chan string ,1 )
 	chanStderrMsg = make ( chan string , 1)
 	chanErr = make ( chan string ,1 )
-
+	exitedCode = make ( chan int ,1 )
 
 	if len(cmdName)==0 {
-		return nil , nil , nil , nil ,nil , fmt.Errorf("error, empty cmd")
+		return nil , nil , nil , nil ,nil , nil, fmt.Errorf("error, empty cmd")
 	}
 
 	log("run cmd=%s , env=%v , stdin_msg=%v \n" , cmdName , env , stdin_msg )
@@ -92,7 +92,7 @@ func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second 
 		goto EXE
 	}
 
-	return nil , nil , nil , nil ,nil , fmt.Errorf("error, no sh or bash installed")
+	return nil , nil , nil , nil ,nil ,nil, fmt.Errorf("error, no sh or bash installed")
 	
 
 EXE:
@@ -110,7 +110,7 @@ EXE:
 
 	log("cmd=%v \n", cmd)
 	if err =cmd.Start() ; err!=nil {
-		return nil , nil , nil , nil ,nil , err
+		return nil , nil , nil , nil ,nil , nil, err
 	}
 
 
@@ -131,10 +131,12 @@ EXE:
 		}
 		chanStdoutMsg<- outMsg.String()
 		chanStderrMsg<- outErr.String()
+		exitedCode<- cmd.ProcessState.ExitCode()
 
 		close(chanStdoutMsg)
 		close(chanStderrMsg)
 		close(chanErr)
+		close(exitedCode)
 
 		select{
 		case  <-chanCancel:
@@ -148,7 +150,7 @@ EXE:
 	}()
 
 
-	return chanFinish , chanCancel , chanStdoutMsg , chanStderrMsg , chanErr , nil
+	return chanFinish , chanCancel , chanStdoutMsg , chanStderrMsg , chanErr , exitedCode , nil
 }
 
 

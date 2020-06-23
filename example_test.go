@@ -42,7 +42,7 @@ func Test_simple_simpleCmd(t *testing.T){
 	stdin_msg:="this is stdin msg"
 	// o for no auto timeout
 	timeout_second:=5
-	chanFinish , _ , chanStdoutMsg , chanStderrMsg , chanErr , e  :=myos.RunCmd( cmd, env , stdin_msg , timeout_second )
+	chanFinish , _ , chanStdoutMsg , chanStderrMsg , chanErr , exitedCode,  e  :=myos.RunCmd( cmd, env , stdin_msg , timeout_second )
 	if e!=nil {
 		fmt.Println(  "failed to exec "+ cmd )
 		t.FailNow()
@@ -62,6 +62,10 @@ func Test_simple_simpleCmd(t *testing.T){
 		if data , ok := <-chanStderrMsg ; ok {
 			fmt.Println(  "stderrMsg: "+ data )
 		}
+		if data , ok := <-exitedCode ; ok {
+			fmt.Println(  "exitedCode: ",  data )
+		}
+
 	}
 
 }
@@ -81,7 +85,7 @@ func Test_simple_longCmd(t *testing.T){
 	stdin_msg:="this is stdin msg"
 	// o for no auto timeout
 	timeout_second:=0
-	chanFinish , chanCancel , chanStdoutMsg , chanStderrMsg , chanErr , e  :=myos.RunCmd( cmd, env , stdin_msg , timeout_second )
+	chanFinish , chanCancel , chanStdoutMsg , chanStderrMsg , chanErr ,_ , e  :=myos.RunCmd( cmd, env , stdin_msg , timeout_second )
 	if e!=nil {
 		fmt.Println(  "failed to exec "+ cmd )
 		t.FailNow()
