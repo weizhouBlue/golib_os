@@ -160,5 +160,10 @@ func Test_json1(t *testing.T){
 }
 
 
-
-
+func Test_path(t *testing.T){
+	fmt.Println( myos.GetMyExecName() )
+	fmt.Println( myos.GetMyExecDir() )
+	fmt.Println( myos.GetMyRunDir() )
+	
+	
+}

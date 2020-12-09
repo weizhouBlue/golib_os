@@ -9,15 +9,39 @@ import(
 	"strings"
 	"io/ioutil"
 	"encoding/json"
-
+	"path/filepath"
 )
 
 /*
 func SearchExecutable( name string ) (string , error) 
 
-func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second int ) ( chanFinish , chanCancel chan bool , chanStdoutMsg , chanStderrMsg , chanErr chan string , e error ) 
+func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second int ) ( chanFinish , chanCancel chan bool , chanStdoutMsg , chanStderrMsg , chanErr chan string , exitedCode chan int, e error ) {
 
-func pathExists(path string) (bool, error)
+func  ReadStdin() []byte {
+
+func  ReadArgs() ( []string  ){
+
+func PathExists(path string) (bool, error) {
+
+func DirectoryExists(path string) (bool, error) {
+
+func FileExists(path string) (bool, error) {
+
+func FileSize(path string) ( int64  , error) {
+
+func EmptyFile( filePath string ) error {
+
+func UniqNumber() string {
+
+func WriteJsonToFile( filePath string , jsonData interface{} ) ( err error)   {
+func ReadJsonFromFile( filePath string  ) ( jsonData []byte , err error) {
+
+
+func GetMyExecName() string {
+
+func GetMyExecDir() string {
+	
+func GetMyRunDir() string {
 
 
 */
@@ -316,7 +340,39 @@ func WriteJsonToFile( filePath string , jsonData interface{} ) ( err error)   {
 
 
 
+func GetMyExecName() string {
+	return filepath.Base(os.Args[0])
+}
+
+// 获取 运行的当前的命令所在的目录
+// 例如: 在 /a 下执行 /usr/bin/b ， 那么 输出 /usr/bin/b
+func GetMyExecDir() string {
+	//返回绝对路径  filepath.Dir(os.Args[0])去除最后一个元素的路径
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		return ""
+	}
+	//将\替换成/
+	return strings.Replace(dir, "\\", "/", -1) 
 
 
+	// path, err := os.Executable()
+	// if err != nil {
+	//     return ""
+	// }
+	// dir := filepath.Dir(path)
+	// return dir
 
+}
+
+// 获取运行当前命令时 所在的目录
+// 例如: 在 /a 下执行 /usr/bin/b ， 那么 输出 /a
+func GetMyRunDir() string {
+
+	if dir , e := os.Getwd() ; e!=nil{
+		return ""
+	}else{
+		return dir
+	}
+}
 
