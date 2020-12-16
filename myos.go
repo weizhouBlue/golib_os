@@ -400,8 +400,7 @@ func WriteFile( sfilePath string , data []byte ) ( err error)   {
 
     // https://godoc.org/io/ioutil#WriteFile
     // 覆盖写
-    err = ioutil.WriteFile( sfilePath , data , 0644 ) 
-    return 
+    return ioutil.WriteFile( sfilePath , data , 0644 )  
 
 }
 
