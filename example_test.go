@@ -167,3 +167,14 @@ func Test_path(t *testing.T){
 	
 	
 }
+
+
+func Test_write( t *testing.T ) {
+
+	data:=[]byte("line1 \n line2 \n\n")
+	fmt.Println( myos.WriteFile( "./test"  , data  )  )
+
+
+}
+
+

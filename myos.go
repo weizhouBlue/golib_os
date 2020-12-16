@@ -29,12 +29,17 @@ func FileExists(path string) (bool, error) {
 
 func FileSize(path string) ( int64  , error) {
 
-func EmptyFile( filePath string ) error {
+func EmptyFile( sfilePath string ) error {
+func WriteFile( sfilePath string , data []byte ) ( err error)   {
+func ReadFile( sfilePath string  ) ( []byte , error)   {
+
+func DeleteFile( sfilePath string ) error 
+func DeleteDir( dirPath string ) error 
 
 func UniqNumber() string {
 
-func WriteJsonToFile( filePath string , jsonData interface{} ) ( err error)   {
-func ReadJsonFromFile( filePath string  ) ( jsonData []byte , err error) {
+func WriteJsonToFile( sfilePath string , jsonData interface{} ) ( err error)   {
+func ReadJsonFromFile( sfilePath string  ) ( jsonData []byte , err error) {
 
 
 func GetMyExecName() string {
@@ -276,10 +281,10 @@ func FileSize(path string) ( int64  , error) {
 
 
 //  creates or truncates the named file
-func EmptyFile( filePath string ) error {
+func EmptyFile( sfilePath string ) error {
 
 	// https://godoc.org/os#Create
-    if file , err:= os.Create(filePath) ; err!=nil {
+    if file , err:= os.Create(sfilePath) ; err!=nil {
         return  err
     }else{
         file.Close()
@@ -298,22 +303,22 @@ func UniqNumber() string {
 //-----------------------
 
 
-func ReadJsonFromFile( filePath string  ) ( jsonData []byte , err error) {
+func ReadJsonFromFile( sfilePath string  ) ( jsonData []byte , err error) {
 
-	if a, e := FileExists(filePath) ; a==false || e!=nil {
-		err=fmt.Errorf("no file %v" , filePath )
+	if a, e := FileExists(sfilePath) ; a==false || e!=nil {
+		err=fmt.Errorf("no file %v" , sfilePath )
 		return
 	}
 
 	// https://godoc.org/io/ioutil#ReadAll
-	jsonData, err =ioutil.ReadFile(filePath)
+	jsonData, err =ioutil.ReadFile(sfilePath)
 	if err!=nil {
 		return 
 	}
 
 	// https://godoc.org/encoding/json#Valid
 	if json.Valid( jsonData  )==false {
-		err=fmt.Errorf("data is not json format in file %v" , filePath )
+		err=fmt.Errorf("data is not json format in file %v" , sfilePath )
 		return
 	}
 
@@ -321,8 +326,8 @@ func ReadJsonFromFile( filePath string  ) ( jsonData []byte , err error) {
 
 }
 
-
-func WriteJsonToFile( filePath string , jsonData interface{} ) ( err error)   {
+// 覆盖写
+func WriteJsonToFile( sfilePath string , jsonData interface{} ) ( err error)   {
 
 	// https://godoc.org/encoding/json#Marshal
 	jsonByte , e := json.Marshal( jsonData ) 
@@ -333,7 +338,7 @@ func WriteJsonToFile( filePath string , jsonData interface{} ) ( err error)   {
 
     // https://godoc.org/io/ioutil#WriteFile
     // 覆盖写
-    err = ioutil.WriteFile( filePath , jsonByte , 0644 ) 
+    err = ioutil.WriteFile( sfilePath , jsonByte , 0644 ) 
     return 
 
 }
@@ -375,4 +380,36 @@ func GetMyRunDir() string {
 		return dir
 	}
 }
+
+
+// 删除一个文件或者一个空目录
+func DeleteFile( sfilePath string ) error  {
+	// https://godoc.org/os#Remove
+    return  os.Remove(sfilePath)
+}
+
+// 删除任意，包括目录下的所有东西
+func DeleteDirOrFile( dirPath string ) error {
+	//https://godoc.org/os#RemoveAll
+    return  os.RemoveAll(dirPath)
+}
+
+
+// 覆盖写
+func WriteFile( sfilePath string , data []byte ) ( err error)   {
+
+    // https://godoc.org/io/ioutil#WriteFile
+    // 覆盖写
+    err = ioutil.WriteFile( sfilePath , data , 0644 ) 
+    return 
+
+}
+
+func ReadFile( sfilePath string  ) ( []byte , error)   {
+
+	// https://godoc.org/io/ioutil#ReadFile
+    return ioutil.ReadFile( sfilePath  )  
+
+}
+
 
