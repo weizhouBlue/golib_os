@@ -10,12 +10,14 @@ import(
 	"io/ioutil"
 	"encoding/json"
 	"path/filepath"
+	"syscall"
 )
 
 /*
 func SearchExecutable( name string ) (string , error) 
 
-func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second int ) ( chanFinish , chanCancel chan bool , chanStdoutMsg , chanStderrMsg , chanErr chan string , exitedCode chan int, e error ) {
+func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second int  ) (  stdoutMsg , stderrMsg  string , exitedCode int, e error ) {
+func RunDaemonCmd( cmdName string , env []string , stdin_msg string ) (  stdoutMsg , stderrMsg  string , process *os.Process , e error ) {
 
 func  ReadStdin() []byte {
 
@@ -81,7 +83,7 @@ func SearchExecutable( name string ) (string , error) {
 
 }
 
-func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second int ) ( chanFinish , chanCancel chan bool , chanStdoutMsg , chanStderrMsg , chanErr chan string , exitedCode chan int, e error ) {
+func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second int  ) (  stdoutMsg , stderrMsg  string , exitedCode int, e error ) {
 	var outMsg bytes.Buffer
 	var outErr bytes.Buffer
 	var ctx context.Context
@@ -89,31 +91,27 @@ func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second 
 	var cmd *exec.Cmd
 	var err error
 
-	chanCancel = make ( chan bool )
-	chanFinish = make ( chan bool )
-	chanStdoutMsg = make ( chan string ,1 )
-	chanStderrMsg = make ( chan string , 1)
-	chanErr = make ( chan string ,1 )
-	exitedCode = make ( chan int ,1 )
 
 	if len(cmdName)==0 {
-		return nil , nil , nil , nil ,nil , nil, fmt.Errorf("error, empty cmd")
+		e=fmt.Errorf("error, empty cmd")
+		return
 	}
 
 	log("run cmd=%s , env=%v , stdin_msg=%v \n" , cmdName , env , stdin_msg )
 
-	if timeout_second>0 {
-		ctx, cancel = context.WithTimeout( context.Background(), time.Duration(timeout_second) * time.Second )
-	}else{
-		ctx, cancel = context.WithCancel(context.Background()  )
+	if timeout_second==0 {
+		timeout_second=10
 	}
 
+	ctx, cancel = context.WithTimeout( context.Background(), time.Duration(timeout_second) * time.Second )
+	defer cancel()
 
 	rootCmd:="bash"
 	if path , _:=SearchExecutable(rootCmd) ; len(path)!=0 {
-		cmd = exec.CommandContext( ctx,  rootCmd , "-c" , cmdName )
+		cmd = exec.CommandContext( ctx,  rootCmd , "-c" ,  cmdName )
 		goto EXE
 	}
+
 
 	rootCmd="sh"
 	if path , _ :=SearchExecutable(rootCmd) ; len(path)!=0 {
@@ -121,72 +119,82 @@ func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second 
 		goto EXE
 	}
 
-	return nil , nil , nil , nil ,nil ,nil, fmt.Errorf("error, no sh or bash installed")
-	
+	e=fmt.Errorf("error, no sh or bash installed")
+	return 
 
 EXE:
-	if env!=nil || len(env)!=0 {
-		cmd.Env = append(os.Environ(), env... )
-	}
+
+	cmd.Env = append(os.Environ(), env... )
+
 	if len(stdin_msg)!=0 {
 		cmd.Stdin = strings.NewReader(stdin_msg)
 	}
 
-
 	cmd.Stdout=&outMsg
 	cmd.Stderr=&outErr
 
+	log("cmd=%v , timeout=%v \n", cmd , timeout_second )
 
-	log("cmd=%v \n", cmd)
-	if err =cmd.Start() ; err!=nil {
-		return nil , nil , nil , nil ,nil , nil, err
+	if err =cmd.Run() ; err!=nil {
+		e=err
+		return 
 	}
 
+	if a:=strings.TrimSpace( outMsg.String() ) ; len(a)>0{
+		stdoutMsg=a			
+	}
+	if b:=strings.TrimSpace( outErr.String() ) ; len(b)>0{
+		stderrMsg=b	
+	}
+	exitedCode=cmd.ProcessState.ExitCode()
 
-	go func(){
-		log("routine for closing cmd=%v \n" , cmdName )
-		<- chanCancel
-		cancel()
-		log("closing routine eixt for cmd=%v \n" , cmdName )
-	}()
+	return 
+}
 
-	go func(){
-		log("routine for executing cmd=%v \n" , cmdName )
-		err:=cmd.Wait()
-		log("routine ending cmd=%v \n" , cmdName )
+func RunDaemonCmd( cmdName string , env []string , stdin_msg string ) ( process *os.Process , e error ) {
+	var cmd *exec.Cmd
+	var err error
 
-		if err!=nil {
-			chanErr<-fmt.Sprintf("%v" , err )
-		}
+	if len(cmdName)==0 {
+		e=fmt.Errorf("error, empty cmd")
+		return
+	}
 
-		a:=strings.TrimSpace( outMsg.String() )
-		if len(a)>0{
-			chanStdoutMsg<- a			
-		}
-		b:=strings.TrimSpace( outErr.String() )
-		if len(b)>0{
-			chanStderrMsg<- b		
-		}
-		exitedCode<- cmd.ProcessState.ExitCode()
+	log("run cmd=%s , env=%v , stdin_msg=%v \n" , cmdName , env , stdin_msg )
 
-		close(chanStdoutMsg)
-		close(chanStderrMsg)
-		close(chanErr)
-		close(exitedCode)
+	rootCmd:="bash"
+	if path , _:=SearchExecutable(rootCmd) ; len(path)!=0 {
+		cmd = exec.Command(  rootCmd , "-c" ,  cmdName )
+		goto EXE
+	}
+	rootCmd="sh"
+	if path , _ :=SearchExecutable(rootCmd) ; len(path)!=0 {
+		cmd = exec.Command(  rootCmd , "-c" , cmdName )
+		goto EXE
+	}
 
-		select{
-		case  <-chanCancel:
-			//channel has been closed
-		default:
-			close(chanCancel)
-		}
-		close(chanFinish)
-		log("executing routine exit for cmd=%v \n" , cmdName )
+	e=fmt.Errorf("error, no sh or bash installed")
+	return 
 
-	}()
+EXE:
 
+	cmd.Env = append(os.Environ(), env... )
+	cmd.SysProcAttr=&syscall.SysProcAttr{
+		Setsid:  true ,
+	}
 
-	return chanFinish , chanCancel , chanStdoutMsg , chanStderrMsg , chanErr , exitedCode , nil
+	if len(stdin_msg)!=0 {
+		cmd.Stdin = strings.NewReader(stdin_msg)
+	}
+
+	if err =cmd.Start() ; err!=nil {
+		e=err
+		return 
+	}
+
+	process=cmd.Process
+
+	return 
 }
 
 

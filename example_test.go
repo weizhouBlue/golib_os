@@ -32,6 +32,9 @@ func Test_simple_simpleCmd(t *testing.T){
 	myos.EnableLog=true
 
 	// exec command
+	// 命令其实是直接更 bash -c "..."
+	// 命令不能是后台的!不能产生 一直运行的子进程的，否则会一直等待，不能自动超时 
+	// 不要跑组合命令  sleep 50 ; echo "hello " , 否则会一直等待直到完成，不能自动超时
 	cmd:="echo $WELAN ; echo aaa "
 	// addtional environment 
 	env:=[]string{
@@ -42,30 +45,16 @@ func Test_simple_simpleCmd(t *testing.T){
 	stdin_msg:="this is stdin msg"
 	// o for no auto timeout
 	timeout_second:=5
-	chanFinish , _ , chanStdoutMsg , chanStderrMsg , chanErr , exitedCode,  e  :=myos.RunCmd( cmd, env , stdin_msg , timeout_second )
-	if e!=nil {
-		fmt.Println(  "failed to exec "+ cmd )
+	if StdoutMsg , StderrMsg  ,exitedCode , e  :=myos.RunCmd( cmd, env , stdin_msg , timeout_second  ); e!=nil {
+		fmt.Printf(  "failed to exec %v : %v", cmd , e )
 		t.FailNow()
 
-	}
-	<-chanFinish
-
-	if data , ok := <-chanErr ; ok {
-		// return code with no succeed
-		fmt.Println(  "err : "+ data )
 	}else{
-		//fmt.Println("ok for cmd"  )
-
-		if data , ok := <-chanStdoutMsg ; ok {
-			fmt.Println(  "stdoutMsg: "+ data )
+		if exitedCode!=0 {
+			fmt.Printf(  "error, exitedCode : %v \n" , exitedCode )
 		}
-		if data , ok := <-chanStderrMsg ; ok {
-			fmt.Println(  "stderrMsg: "+ data )
-		}
-		if data , ok := <-exitedCode ; ok {
-			fmt.Println(  "exitedCode: ",  data )
-		}
-
+		fmt.Println(  "stderrMsg : "+ StderrMsg )
+		fmt.Println(  "StdoutMsg : "+ StdoutMsg )
 	}
 
 }
@@ -75,7 +64,10 @@ func Test_simple_longCmd(t *testing.T){
 	myos.EnableLog=true
 
 	// exec command
-	cmd:="sleep 10d"
+	// 命令其实是直接更 bash -c "..."
+	// 命令不能是后台的!不能产生 一直运行的子进程的，否则会一直等待直到完成，不能自动超时 
+	// 不要跑组合命令  sleep 50 && echo "hello " , 否则会一直等待直到完成，不能自动超时
+	cmd:=" sleep 50  "  
 	// addtional environment 
 	env:=[]string{
 		"WELAN=12345",
@@ -84,39 +76,61 @@ func Test_simple_longCmd(t *testing.T){
 	// stdin for cmd
 	stdin_msg:="this is stdin msg"
 	// o for no auto timeout
-	timeout_second:=0
-	chanFinish , chanCancel , chanStdoutMsg , chanStderrMsg , chanErr ,_ , e  :=myos.RunCmd( cmd, env , stdin_msg , timeout_second )
-	if e!=nil {
-		fmt.Println(  "failed to exec "+ cmd )
+	timeout_second:=5
+	if  StdoutMsg , StderrMsg  ,exitedCode , e  :=myos.RunCmd( cmd, env , stdin_msg , timeout_second ); e!=nil {
+		fmt.Printf(  "failed to exec %v : %v", cmd , e )
 		t.FailNow()
 
-	}
-
-	//wait for cmd
-	select{
-	case <- chanFinish:
-		fmt.Println("cmd finish ")
-	case <- time.After(5*time.Second) : 
-		fmt.Println("cmd timeout , cancel it")
-		close(chanCancel)
-	}
-	
-	//read msg
-	if data , ok := <-chanErr ; ok {
-		// return code with no succeed
-		fmt.Println(  "err : "+ data )
 	}else{
-		//fmt.Println("ok for cmd"  )
-
-		if data , ok := <-chanStdoutMsg ; ok {
-			fmt.Println(  "stdoutMsg: "+ data )
+		if exitedCode!=0 {
+			fmt.Printf(  "error, exitedCode : %v \n" , exitedCode )
 		}
-		if data , ok := <-chanStderrMsg ; ok {
-			fmt.Println(  "stderrMsg: "+ data )
-		}
+		fmt.Println(  "stderrMsg : "+ StderrMsg )
+		fmt.Println(  "StdoutMsg : "+ StdoutMsg )
 	}
 
 }
+
+
+
+func Test_back(t *testing.T){
+
+	myos.EnableLog=true
+
+	// exec command
+	// 命令其实是直接更 bash -c "..."
+	// 命令不能是后台的!不能产生 一直运行的子进程的，否则会一直等待，不能自动超时 
+	cmd:=` sleep 20 && echo byebye ` 
+	// addtional environment 
+	env:=[]string{
+		"WELAN=12345",
+		"TOM=uit",
+	}
+	// stdin for cmd
+	stdin_msg:="this is stdin msg"
+	if  process , e  :=myos.RunDaemonCmd( cmd, env , stdin_msg  ); e!=nil {
+		fmt.Printf(  "failed to exec %v : %v", cmd , e )
+		t.FailNow()
+
+	}else{
+
+
+		// https://godoc.org/os#Process
+		fmt.Printf(  "pid : %v \n" , process.Pid )
+		
+		time.Sleep(5*time.Second)
+		//process.Kill()
+
+		// https://godoc.org/os#Process
+		// if _ , e:=process.Wait(); e!=nil {
+		// 	fmt.Printf(  "error : %v \n" , e )
+		// }
+
+		
+	}
+
+}
+
 
 
 
@@ -176,5 +190,9 @@ func Test_write( t *testing.T ) {
 
 
 }
+
+
+
+
 
 
