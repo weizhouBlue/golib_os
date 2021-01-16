@@ -151,6 +151,7 @@ EXE:
 	return 
 }
 
+
 func RunDaemonCmd( cmdName string , env []string , stdin_msg string ) ( process *os.Process , e error ) {
 	var cmd *exec.Cmd
 	var err error
@@ -177,6 +178,10 @@ func RunDaemonCmd( cmdName string , env []string , stdin_msg string ) ( process 
 	return 
 
 EXE:
+	// 不添加如下，守护进程的输出 到 /DEV/NULL , 看不到输出
+	// 但添加了如下，go父进程会一直等待 守护进程退出 后才会退出
+	// cmd.Stderr=os.Stderr
+	// cmd.Stdout=os.Stdout
 
 	cmd.Env = append(os.Environ(), env... )
 	cmd.SysProcAttr=&syscall.SysProcAttr{

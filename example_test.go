@@ -108,7 +108,7 @@ func Test_back(t *testing.T){
 	}
 	// stdin for cmd
 	stdin_msg:="this is stdin msg"
-	if  process , e  :=myos.RunDaemonCmd( cmd, env , stdin_msg  ); e!=nil {
+	if  p , e  :=myos.RunDaemonCmd( cmd, env , stdin_msg  ); e!=nil {
 		fmt.Printf(  "failed to exec %v : %v", cmd , e )
 		t.FailNow()
 
@@ -116,17 +116,18 @@ func Test_back(t *testing.T){
 
 
 		// https://godoc.org/os#Process
-		fmt.Printf(  "pid : %v \n" , process.Pid )
+		fmt.Printf(  "pid : %v \n" , p.Pid )
 		
 		time.Sleep(5*time.Second)
-		//process.Kill()
+		//p.Kill()
 
 		// https://godoc.org/os#Process
-		// if _ , e:=process.Wait(); e!=nil {
+		// if _ , e:=p.Wait(); e!=nil {
 		// 	fmt.Printf(  "error : %v \n" , e )
 		// }
 
-		
+		 
+		 p.Release() 
 	}
 
 }
