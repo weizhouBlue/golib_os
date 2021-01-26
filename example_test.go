@@ -36,6 +36,8 @@ func Test_simple_simpleCmd(t *testing.T){
 	// 命令不能是后台的!不能产生 一直运行的子进程的，否则会一直等待，不能自动超时 
 	// 不要跑组合命令  sleep 50 ; echo "hello " , 否则会一直等待直到完成，不能自动超时
 	cmd:="echo $WELAN ; echo aaa "
+	//cmd:="avssrt "
+
 	// addtional environment 
 	env:=[]string{
 		"WELAN=12345",
@@ -45,17 +47,15 @@ func Test_simple_simpleCmd(t *testing.T){
 	stdin_msg:="this is stdin msg"
 	// o for no auto timeout
 	timeout_second:=5
-	if StdoutMsg , StderrMsg  ,exitedCode , e  :=myos.RunCmd( cmd, env , stdin_msg , timeout_second  ); e!=nil {
-		fmt.Printf(  "failed to exec %v : %v", cmd , e )
-		t.FailNow()
-
-	}else{
-		if exitedCode!=0 {
-			fmt.Printf(  "error, exitedCode : %v \n" , exitedCode )
-		}
-		fmt.Println(  "stderrMsg : "+ StderrMsg )
-		fmt.Println(  "StdoutMsg : "+ StdoutMsg )
+	StdoutMsg , StderrMsg  ,exitedCode , e  :=myos.RunCmd( cmd, env , stdin_msg , timeout_second  ) 
+	// 当 e!=nil 时， 包括了exitedCode!=0的场景
+	if e!=nil {
+		fmt.Printf(  "failed to exec %v : %v \n", cmd , e )
+		fmt.Printf(  "error, exitedCode : %v \n" , exitedCode )
 	}
+	fmt.Println(  "stderrMsg : "+ StderrMsg )
+	fmt.Println(  "StdoutMsg : "+ StdoutMsg )
+	
 
 }
 
@@ -107,8 +107,9 @@ func Test_back(t *testing.T){
 		"TOM=uit",
 	}
 	// stdin for cmd
+	waitForStd:=true
 	stdin_msg:="this is stdin msg"
-	if  p , e  :=myos.RunDaemonCmd( cmd, env , stdin_msg  ); e!=nil {
+	if  p , e  :=myos.RunDaemonCmd( cmd, env , stdin_msg  ,waitForStd); e!=nil {
 		fmt.Printf(  "failed to exec %v : %v", cmd , e )
 		t.FailNow()
 

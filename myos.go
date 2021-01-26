@@ -83,14 +83,13 @@ func SearchExecutable( name string ) (string , error) {
 
 }
 
+// 当 e!=nil 时， 包括了exitedCode!=0的场景
 func RunCmd( cmdName string , env []string , stdin_msg string  , timeout_second int  ) (  stdoutMsg , stderrMsg  string , exitedCode int, e error ) {
 	var outMsg bytes.Buffer
 	var outErr bytes.Buffer
 	var ctx context.Context
 	var cancel context.CancelFunc
 	var cmd *exec.Cmd
-	var err error
-
 
 	if len(cmdName)==0 {
 		e=fmt.Errorf("error, empty cmd")
@@ -135,10 +134,7 @@ EXE:
 
 	log("cmd=%v , timeout=%v \n", cmd , timeout_second )
 
-	if err =cmd.Run() ; err!=nil {
-		e=err
-		return 
-	}
+	e =cmd.Run() 
 
 	if a:=strings.TrimSpace( outMsg.String() ) ; len(a)>0{
 		stdoutMsg=a			
@@ -152,7 +148,9 @@ EXE:
 }
 
 
-func RunDaemonCmd( cmdName string , env []string , stdin_msg string ) ( process *os.Process , e error ) {
+// waitForStd=false , 守护进程的输出 到 /DEV/NULL , 看不到输出, 父进程可以正常退出
+// waitForStd=true ,  go父进程会一直等待 守护进程退出 后才会退出, 但可以看到守护进程的输出
+func RunDaemonCmd( cmdName string , env []string , stdin_msg string , waitForStd bool ) ( process *os.Process , e error ) {
 	var cmd *exec.Cmd
 	var err error
 
@@ -180,8 +178,11 @@ func RunDaemonCmd( cmdName string , env []string , stdin_msg string ) ( process 
 EXE:
 	// 不添加如下，守护进程的输出 到 /DEV/NULL , 看不到输出
 	// 但添加了如下，go父进程会一直等待 守护进程退出 后才会退出
-	// cmd.Stderr=os.Stderr
-	// cmd.Stdout=os.Stdout
+	if waitForStd==true {
+	   cmd.Stderr=os.Stderr
+	   cmd.Stdout=os.Stdout		
+	}
+
 
 	cmd.Env = append(os.Environ(), env... )
 	cmd.SysProcAttr=&syscall.SysProcAttr{
