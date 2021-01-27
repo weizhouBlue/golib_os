@@ -48,13 +48,14 @@ func Test_simple_simpleCmd(t *testing.T){
 	// o for no auto timeout
 	timeout_second:=5
 	StdoutMsg , StderrMsg  ,exitedCode , e  :=myos.RunCmd( cmd, env , stdin_msg , timeout_second  ) 
+	fmt.Println(  "stderrMsg : "+ StderrMsg )
+	fmt.Println(  "StdoutMsg : "+ StdoutMsg )
 	// 当 e!=nil 时， 包括了exitedCode!=0的场景
 	if e!=nil {
 		fmt.Printf(  "failed to exec %v : %v \n", cmd , e )
 		fmt.Printf(  "error, exitedCode : %v \n" , exitedCode )
 	}
-	fmt.Println(  "stderrMsg : "+ StderrMsg )
-	fmt.Println(  "StdoutMsg : "+ StdoutMsg )
+
 	
 
 }
